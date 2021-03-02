@@ -1,0 +1,6 @@
+name: JDL REST Processor
+type: module
+description: Processes JDL API requests.
+package: JDL
+core: 8.x
+core_version_requirement: ^8 || ^9

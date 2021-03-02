@@ -1,0 +1,4 @@
+services:
+  plugin.manager.jdl_achievments:
+    class: Drupal\jdl_achievments\JdlAchievmentsPluginManager
+    parent: default_plugin_manager

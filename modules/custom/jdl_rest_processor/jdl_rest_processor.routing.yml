@@ -1,0 +1,7 @@
+[jdl_rest_processor.replay_save:
+  path: '/replay'
+  defaults:
+    _title: 'Replay'
+    _controller: '\Drupal\jdl_rest_processor\Controller\Replay::build'
+  requirements:
+    _permission: 'access content'
