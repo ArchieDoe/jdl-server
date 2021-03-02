@@ -1,4 +1,4 @@
-[jdl_rest_processor.replay_save:
+jdl_rest_processor.replay_save:
   path: '/replay'
   defaults:
     _title: 'Replay'

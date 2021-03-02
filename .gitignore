@@ -25,3 +25,4 @@ sites/simpletest
 
 # Ignore SimpleTest multi-site environment.
 # simpletest
+/example.gitignore
