@@ -1,47 +1,53 @@
 <?php
 
+const REPLAY_CT_ID = 'replay';
+const DIFF_EASY = 0;
+const DIFF_NORMAL = 1;
+const DIFF_HARD = 2;
+const DIFF_NAMES = [DIFF_EASY => 'Easy', DIFF_NORMAL => 'Normal', DIFF_HARD => 'Hard'];
+
 use Drupal\taxonomy\Entity\Term;
 
-function jdl_rest_processor_node_presave(\Drupal\Core\Entity\EntityInterface $node) {
-   
+function ppjdl_rest_processor_node_presave(\Drupal\Core\Entity\EntityInterface $node) {
+
   switch ($node->bundle()) {
     case "replay":
         $data = substr($node->field_data->value, 2);
         $data = base64_decode($data);
         $data = json_decode($data);
         $node->field_data->value = json_encode($data);
-        
-        
+
+
         $time = $data[count($data) - 4];
         $node->field_time->value = $time * 0.016666;
-        
+
         $terms = \Drupal::entityTypeManager()
           ->getStorage('taxonomy_term')
           ->loadByProperties(['name' => $node->field_level_id->value]);
-          
+
         $level = reset($terms);
-        
+
         if (!$level) {
             throw new \Exception(t('Level is unknown.'));
-        } 
+        }
         $node->field_level->target_id = $level->id();
-  
-        
+
+
         $achievments = $level->field_achievment->referencedEntities();
-       
-        
+
+
         foreach ($achievments as $achievment) {
             $plugin_id = $achievment->field_plugin_id->value;
-            
+
             $achievments_manager = \Drupal::service('plugin.manager.jdl_achievments');
             $achievment_plugin = $achievments_manager->createInstance($plugin_id);
-            
-            
+
+
             $achievment_plugin->check(\Drupal::currentUser());
         }
-        
-       
-          
+
+
+
         break;
   }
 }

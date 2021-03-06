@@ -1,18 +1,18 @@
 <?php
 
-namespace Drupal\jdl_achievments;
+namespace Drupal\jdl_achievements;
 
 use Drupal\Core\Cache\CacheBackendInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Plugin\DefaultPluginManager;
 
 /**
- * JdlAchievments plugin manager.
+ * JdlAchievements plugin manager.
  */
-class JdlAchievmentsPluginManager extends DefaultPluginManager {
+class JdlAchievementsPluginManager extends DefaultPluginManager {
 
   /**
-   * Constructs JdlAchievmentsPluginManager object.
+   * Constructs JdlAchievementsPluginManager object.
    *
    * @param \Traversable $namespaces
    *   An object that implements \Traversable which contains the root paths
@@ -24,14 +24,14 @@ class JdlAchievmentsPluginManager extends DefaultPluginManager {
    */
   public function __construct(\Traversable $namespaces, CacheBackendInterface $cache_backend, ModuleHandlerInterface $module_handler) {
     parent::__construct(
-      'Plugin/JdlAchievments',
+      'Plugin/JdlAchievements',
       $namespaces,
       $module_handler,
-      'Drupal\jdl_achievments\JdlAchievmentsInterface',
-      'Drupal\jdl_achievments\Annotation\JdlAchievments'
+      'Drupal\jdl_achievements\JdlAchievementsInterface',
+      'Drupal\jdl_achievements\Annotation\JdlAchievements'
     );
-    $this->alterInfo('jdl_achievments_info');
-    $this->setCacheBackend($cache_backend, 'jdl_achievments_plugins');
+    $this->alterInfo('jdl_achievements_info');
+    $this->setCacheBackend($cache_backend, 'jdl_achievements_plugins');
   }
 
 }

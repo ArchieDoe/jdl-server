@@ -1,20 +1,20 @@
 <?php
 
-namespace Drupal\jdl_achievments\Plugin\JdlAchievments;
+namespace Drupal\jdl_achievements\Plugin\JdlAchievements;
 
-use Drupal\jdl_achievments\JdlAchievmentsPluginBase;
+use Drupal\jdl_achievements\JdlAchievementsPluginBase;
 use Drupal\Core\Session\AccountInterface;
 
 /**
- * Plugin implementation of the jdl_achievments.
+ * Plugin implementation of the jdl_achievements.
  *
- * @JdlAchievments(
+ * @JdlAchievements(
  *   id = "sand_enjoyer",
  *   label = @Translation("Sand Enjoyer"),
  *   description = @Translation("Sand Enjoyer.")
  * )
  */
-class SandEnjoyer extends JdlAchievmentsPluginBase {
+class SandEnjoyer extends JdlAchievementsPluginBase {
     public function check(AccountInterface $account) {
         return false;
     }

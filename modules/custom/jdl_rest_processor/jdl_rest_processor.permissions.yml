@@ -1,0 +1,4 @@
+access jdl api:
+  title: 'Access JDL API'
+  description: 'Grants access to JDL API.'
+  restrict access: true

@@ -1,6 +1,6 @@
-name: JDL Achievments
+name: JDL Achievements
 type: module
-description: Contains available achievments.
+description: Contains available achievements.
 package: JDL
 core: 8.x
 core_version_requirement: ^8 || ^9

@@ -1,13 +1,13 @@
 <?php
 
-namespace Drupal\jdl_achievments;
+namespace Drupal\jdl_achievements;
 
 use Drupal\Core\Session\AccountInterface;
 
 /**
- * Interface for jdl_achievments plugins.
+ * Interface for jdl_achievements plugins.
  */
-interface JdlAchievmentsInterface {
+interface JdlAchievementsInterface {
 
   /**
    * Returns the translated plugin label.
@@ -16,7 +16,7 @@ interface JdlAchievmentsInterface {
    *   The translated title.
    */
   public function label();
-  
+
   public function check(AccountInterface $account);
 
 }

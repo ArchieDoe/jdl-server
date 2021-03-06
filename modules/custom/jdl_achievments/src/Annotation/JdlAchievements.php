@@ -1,15 +1,15 @@
 <?php
 
-namespace Drupal\jdl_achievments\Annotation;
+namespace Drupal\jdl_achievements\Annotation;
 
 use Drupal\Component\Annotation\Plugin;
 
 /**
- * Defines jdl_achievments annotation object.
+ * Defines jdl_achievements annotation object.
  *
  * @Annotation
  */
-class JdlAchievments extends Plugin {
+class JdlAchievements extends Plugin {
 
   /**
    * The plugin ID.
