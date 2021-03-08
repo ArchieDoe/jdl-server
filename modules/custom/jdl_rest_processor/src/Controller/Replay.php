@@ -7,7 +7,9 @@ use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\example\ExampleInterface;
+use Drupal\jdl_rest_processor\JdlRestHelper;
 use Drupal\node\NodeInterface;
+use Drupal\taxonomy\Entity\Term;
 use Drupal\taxonomy\TermInterface;
 use Drupal\user\Entity\User;
 use Drupal\user\UserInterface;
@@ -29,14 +31,27 @@ class Replay extends ControllerBase {
    */
   private $pluginManagerJdlAchievements;
 
+  /**
+   * @var \Drupal\Core\Entity\EntityBase|\Drupal\Core\Entity\EntityInterface|null
+   */
+  protected $user;
+
+  /**
+   * @var \Drupal\jdl_rest_processor\JdlRestHelper
+   */
+  protected $restHelper;
+
   public function __construct(
     EntityTypeManagerInterface $entity_type_manager,
     PluginManagerInterface $plugin_manager_jdl_achievements,
-    AccountInterface $current_user
+    AccountInterface $current_user,
+    JdlRestHelper $jdl_rest_helper
   ) {
     $this->entityTypeManager = $entity_type_manager;
     $this->pluginManagerJdlAchievements = $plugin_manager_jdl_achievements;
     $this->currentUser = $current_user;
+    $this->user = User::load($this->currentUser->id());
+    $this->restHelper = $jdl_rest_helper;
   }
 
   /**
@@ -46,7 +61,9 @@ class Replay extends ControllerBase {
     return new static(
       $container->get('entity_type.manager'),
       $container->get('plugin.manager.jdl_achievements'),
-      $container->get('current_user')
+      $container->get('current_user'),
+      $container->get('jdl.rest_helper')
+
     );
   }
 
@@ -65,20 +82,18 @@ class Replay extends ControllerBase {
       throw new BadRequestHttpException(t('Bad data.'));
     }
 
-
-    $user = User::load($this->currentUser->id());
-
     $l = count($data);
-    $difficulty = $data[$l - 1];
-    unset($data[$l - 1]);
+    $difficulty = $data[$l - 2];
+    $rating = $data[$l - 1];
+    unset($data[$l - 1], $data[$l - 2]);
 
-    $time = $data[count($data) - 4];
+    $time = $data[count($data) - 4] * 0.01666666 + 0.01666666;
 
-    $terms = \Drupal::entityTypeManager()
+    $level = \Drupal::entityTypeManager()
       ->getStorage('taxonomy_term')
       ->loadByProperties(['name' => $raw_data->level]);
 
-    $level = reset($terms);
+    $level = reset($level);
     if (!$level) {
       throw new BadRequestHttpException(t('Level is unknown.'));
     }
@@ -87,37 +102,36 @@ class Replay extends ControllerBase {
     $existing_replay = \Drupal::entityTypeManager()
       ->getStorage('node')
       ->loadByProperties([
-        'field_level' => $level->id(),
-        'uid' => $user->id(),
-        'field_difficulty' => $difficulty,
-      ]
-    );
+          'field_level' => $level->id(),
+          'uid' => $this->user->id(),
+          'field_difficulty' => $difficulty,
+        ]
+      );
 
 
     if ($existing_replay) {
       $replay = reset($existing_replay);
-      $this->replayUpdate($replay, $difficulty, $time, $data, $level);
+      $this->replayUpdate($replay, $difficulty, $time, $data, $level, $rating);
     }
     else {
-      $this->replayCreate($difficulty, $time, $data, $level);
+      $this->replayCreate($difficulty, $time, $data, $level, $rating);
     }
 
 
     $achievements = $level->field_achievements->referencedEntities();
-
-    $completed_achievements = [];
     foreach ($achievements as $achievement) {
-        $this->applyAchievement($user, $achievement);
+      $this->applyAchievement($this->user, $achievement);
     }
 
+    $this->updateAvailableLevels($level);
+    $this->user->save();
 
-    $result = new \stdClass();
-    $result->achievements = $completed_achievements;
-    return new JsonResponse($result, 200);
+    $data = $this->restHelper->loadPlayerData();
+    return new JsonResponse($data, 200);
   }
 
   private function dataValidate($data) {
-    return true;
+    return TRUE;
   }
 
   /**
@@ -150,30 +164,73 @@ class Replay extends ControllerBase {
       else {
         $user->field_achievements->target_id = $achievement->id();
       }
-
-      $user->save();
     }
   }
 
-  private function replayUpdate(NodeInterface $replay, $difficulty, $time, $data, $level) {
-    $replay->field_time = $time;
-    $replay->field_data = json_encode($data);
+  private function replayUpdate(NodeInterface $replay, $difficulty, $time, $data, $level, $rating) {
+    $replay->set('field_time', $time);
+    $replay->set('field_data', json_encode($data));
+    $replay->set('field_rating', $rating);
 
     $replay->save();
   }
 
-  private function replayCreate($difficulty, $time, $data, TermInterface $level) {
+  private function replayCreate($difficulty, $time, $data, TermInterface $level, $rating) {
     $replay = Node::create([
       'type' => REPLAY_CT_ID,
       'title' => $level->getName() . ' ' . DIFF_NAMES[$difficulty],
       'field_difficulty' => $difficulty,
-      'field_time' => $time * 0.016666,
+      'field_time' => $time,
       'field_data' => json_encode($data),
       'field_level' => $level->id(),
+      'field_rating' => $rating,
     ]);
 
     $replay->save();
 
     return $replay;
+  }
+
+  private function updateAvailableLevels(TermInterface $level) {
+    $available_levels = $this->user->field_available_levels ? $this->user->field_available_levels->value : '[]';
+    $available_levels = json_decode($available_levels);
+    $this->user->set('field_current_level', $level->id());
+    // Extracting next level.
+    $next_level = $this->getNextLevel($level);
+    if (!$next_level) {
+      return;
+    }
+
+    if (!in_array($next_level->getName(), $available_levels)) {
+      $available_levels[] = $next_level->getName();
+      $this->user->set('field_available_levels', json_encode($available_levels));
+    }
+
+    $this->user->set('field_current_level', $level->id());
+  }
+
+  /**
+   * @param \Drupal\taxonomy\TermInterface $level
+   *
+   * @return TermInterface|NULL
+   */
+  private function getNextLevel(TermInterface $level) {
+    $connection = \Drupal::database();
+    $query = $connection->select('taxonomy_term_field_data', 'levels');
+    $query->condition('levels.vid', 'level');
+    $query->condition('levels.weight', $level->getWeight(), '>');
+    $query->orderBy('weight');
+    $query->range(0, 1);
+    $query->addField('levels', 'tid', 'tid');
+    $query->addField('levels', 'weight', 'weight');
+
+    $tid = $query->execute()->fetchField();
+
+    if ($tid) {
+      $level = Term::load($tid);
+      return $level;
+    }
+
+    return NULL;
   }
 }

@@ -20,7 +20,7 @@ class SandFan extends JdlAchievementsPluginBase {
         $current_user = \Drupal::currentUser();
 
         $query = $database->select('node_field_data', 'node');
-        $query->join('node_revision__field_level', 'level_ref', 'node.nid = level_ref.entity_id');
+        $query->join('node__field_level', 'level_ref', 'node.nid = level_ref.entity_id');
         $query->join('taxonomy_term__field_world', 'world_ref', 'level_ref.field_level_target_id = world_ref.entity_id');
 
         $query->fields('world_ref', ['entity_id']);
@@ -33,11 +33,10 @@ class SandFan extends JdlAchievementsPluginBase {
         $query->condition('world_ref.field_world_target_id', 28);
         $all_beach_levels = $query->execute()->fetchCol();
 
-        if (count($completed_beach_levels) == count($all_beach_levels)) {
+        if (count(array_intersect($all_beach_levels, $completed_beach_levels)) == count($all_beach_levels)) {
           $this->grantReward();
           return TRUE;
         }
-
         return FALSE;
     }
 }

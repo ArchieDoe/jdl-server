@@ -10,3 +10,16 @@ jdl_rest_processor.replay_save:
     _format: json
   options:
     _auth: ['cookie']
+
+jdl_rest_processor.player_load:
+  path: '/api/v1/player'
+  defaults:
+    _title: 'Player Data'
+    _controller: '\Drupal\jdl_rest_processor\Controller\Player::load'
+  methods: [GET]
+  requirements:
+    _permission: 'access jdl api'
+    _format: json
+  options:
+    _auth: [ 'cookie' ]
+

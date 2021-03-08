@@ -42,7 +42,6 @@ abstract class JdlAchievementsPluginBase extends PluginBase implements JdlAchiev
           break;
         }
       }
-
       if (!$has_skin) {
         if (!$user->field_skins) {
           $user->field_skins->target_id = $award_skin_id;

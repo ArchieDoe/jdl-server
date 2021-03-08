@@ -1,0 +1,4 @@
+services:
+  jdl.rest_helper:
+    class: Drupal\jdl_rest_processor\JdlRestHelper
+    arguments: ['@entity_type.manager', '@database', '@current_user']
