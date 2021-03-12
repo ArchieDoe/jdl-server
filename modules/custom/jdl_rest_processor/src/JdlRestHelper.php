@@ -77,16 +77,26 @@ class JdlRestHelper {
   }
 
   private function getCurrentLevel() {
-    if ($this->user->field_current_level) {
-      $level = $this->user->field_current_level->referencedEntities();
-      $level = reset($level);
-      return $level->getName();
+    if (!$this->user->field_current_level) {
+      return LEVEL_START;
     }
+    $level = $this->user->field_current_level->referencedEntities();
 
-    return LEVEL_START;
+    if (!$level) {
+      return LEVEL_START;
+    }
+    $level = reset($level);
+
+    return $level->getName();
   }
 
   private function getReplays() {
+    $diffs = [
+      DIFF_EASY => 'easy',
+      DIFF_NORMAL => 'normal',
+      DIFF_HARD => 'hard',
+    ];
+
     $query = $this->connection->select('node_field_data', 'node');
     $query->join('node__field_data', 'data', 'node.nid = data.entity_id');
     $query->join('node__field_time', 'time', 'node.nid = time.entity_id');
@@ -105,8 +115,10 @@ class JdlRestHelper {
     $results = $query->execute();
 
     $replays = [];
+
+
     foreach ($results as $result) {
-      $replays[$result->id][$result->difficulty] = [
+      $replays[$result->id][$diffs[$result->difficulty]] = [
         'time' => $result->time,
         'rating' => $result->rating,
         'data' => $result->data,
@@ -121,7 +133,13 @@ class JdlRestHelper {
     $query->condition('skins_ref.entity_id', $this->user->id());
     $query->addField('skin', 'name', 'id');
 
-    return $query->execute()->fetchAllAssoc('id');
+    $skins = $query->execute()->fetchAllAssoc('id');
+
+    if (!$skins) {
+      $skins = [PLAYER_SKIN_DEFAULT => PLAYER_SKIN_DEFAULT];
+    }
+
+    return $skins;
   }
 
   private function getAchievements() {
@@ -135,9 +153,13 @@ class JdlRestHelper {
 
   private function getActiveSkin() {
     if (!$this->user->field_active_skin) {
-      return "default";
+      return PLAYER_SKIN_DEFAULT;
     }
     $skins = $this->user->field_active_skin->referencedEntities();
+
+    if (!$skins) {
+      return PLAYER_SKIN_DEFAULT;
+    }
     $skin = reset($skins);
 
     return $skin->getName();

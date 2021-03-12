@@ -23,3 +23,15 @@ jdl_rest_processor.player_load:
   options:
     _auth: [ 'cookie' ]
 
+
+jdl.leaderboard:
+  path: '/api/v1/leaderboard/{level_id}/{difficulty}'
+  defaults:
+    _title: 'Leaderboard'
+    _controller: '\Drupal\jdl_rest_processor\Controller\Leaderboard::view'
+  methods: [GET]
+  requirements:
+    _permission: 'access jdl api'
+    _format: json
+  options:
+    _auth: [ 'cookie' ]

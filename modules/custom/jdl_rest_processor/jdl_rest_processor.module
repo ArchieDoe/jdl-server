@@ -6,6 +6,7 @@ const DIFF_NORMAL = 1;
 const DIFF_HARD = 2;
 const DIFF_NAMES = [DIFF_EASY => 'Easy', DIFF_NORMAL => 'Normal', DIFF_HARD => 'Hard'];
 const LEVEL_START = 'bb00';
+const PLAYER_SKIN_DEFAULT = 'default';
 
 use Drupal\taxonomy\Entity\Term;
 
